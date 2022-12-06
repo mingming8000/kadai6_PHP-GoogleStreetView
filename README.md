@@ -1,0 +1,2 @@
+# kadai6_PHP-GoogleStreetView
+PHP掲示板上に各旅先（Gs校舎）にコメントを入れると､その近くのGoogleStreetViewの動画放映
