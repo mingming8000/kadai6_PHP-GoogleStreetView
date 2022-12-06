@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sample</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+ 
+        #street-view {
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+ 
+<div id="street-view"></div>
+ 
+<script>
+    const LIMIT = 30; // 移動回数の上限値
+    const WAIT_SECOND = 2; // 次に移動するまでの秒数
+    const START_LAT_LNG = {lat: 43.0719814,lng: 141.3581321}; // 開始地点の緯度、経度 
+    // 【表参道駅△】lat: 35.6651924, lng: 139.7125071　【渋谷スクランブル交差点×】lat: 35.65933, lng: 139.70052
+    // 【竹下通り（中心）】lat: 35.67091,lng: 139.704899　【竹下通り（最大）】lat: 35.67215,lng: 139.706873　	
+    // 【渋谷駅×】lat: 35.658034,lng: 139.701636 【渋谷センター街×】lat: 35.6604027,lng: 139.6984333
+    // 【外苑前銀杏並木】lat: 35.6733635,lng: 139.7202563
+    // 【シャンゼリゼ通り×】lat: 48.871548,lng: 2.302142 【シャンゼリゼ通り近辺】lat: 48.872548,lng: 2.302142
+    // 【梨泰院】lat: 37.533997864,lng: 126.989662708 開始地点の緯度、経度
+    // 【01_東京：junction harajuku】lat: 35.6693211,lng: 139.7007829
+    // 【02_札幌：EZOHUB SAPPORO】lat: 43.0719814,lng: 141.3581321
+    // 【03_福岡：プリオ大名ビル】lat: 33.5865713,lng: 130.392302　　
+    // 【04_山口：meguriba】lat: 34.0930899,lng: 131.3920085
+    // 【05_大阪：戎橋】lat: 34.6690513,lng: 135.501356
+
+
+    const START_HEADING = 180; // 開始時の方角
+    let panorama;
+ 
+    // GoogleMapApi 読み込み時にcallbackで呼び出される
+    function initMap() {
+        let Links, count = 0, timer_id;
+ 
+        // ストリートビューの表示
+        panorama = new google.maps.StreetViewPanorama(
+            document.getElementById('street-view'), {
+                position: START_LAT_LNG,
+                pov: {
+                    heading: START_HEADING,
+                    pitch: 0
+                },
+                zoom: 1
+            }); // 
+ 
+        // 画面内のリンクを取得
+        Links = panorama.getLinks();
+ 
+        // ストリートビューの状態が変更されるたびに実行される
+        google.maps.event.addListener(panorama, 'status_changed', function () { // 
+            if (panorama.getStatus() == "OK") {
+                Links = panorama.getLinks();
+ 
+                if (count > LIMIT) {
+                    alert('stop');
+                    return false;
+                }
+ 
+                setTimeout(
+                    function () {
+                        let target = 0;
+                        if (Links.length >= 4) {
+                            target = Math.floor(Math.random() * Links.length); // ランダムで選択
+                        } else {
+                            //現在向ている方向に近いlinkを選択
+                            let val = 360;
+                            let currentPov = panorama.getPov();
+                            Links.forEach(function (element, index) {
+                                let ans = Math.abs(currentPov.heading - element.heading);
+                                if (val > ans) {
+                                    val = ans;
+                                    target = index;
+                                }
+                            });
+                        }
+                        // 次に移動するLink先に向きを変える
+                        panorama.setPov({
+                            heading: Links[target].heading,
+                            pitch: 0
+                        });
+                        // 次のストリートビューに移動する
+                        panorama.setPano(Links[target]['pano']);
+                        count++;
+                    },
+                    WAIT_SECOND * 1000
+                );
+            }
+        });
+    }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=[ここに取得したAPIキー]&callback=initMap"
+        async defer></script>
+</body>
+</html>
